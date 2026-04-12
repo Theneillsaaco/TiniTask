@@ -1,62 +1,226 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:material="clr-namespace:Material.Styles.Controls;assembly=Material.Styles"
         xmlns:models="clr-namespace:TiniTask.Models"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="600"
+        mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="700"
         x:Class="TiniTask.MainWindow"
         x:CompileBindings="False"
-        Title="TiniTask">
-    
-    <StackPanel Margin="20" Spacing="12">
-        <TextBlock Text="Mini TiniTask"
-                   FontSize="24"
-                   FontWeight="Bold"
-                   HorizontalAlignment="Center" />
-        
-        <material:Card Padding="15">
-            <StackPanel Spacing="10">
-                <TextBox Name="TextInput" 
-                         PlaceholderText="Texto a escribir" />
-                
-                <TextBox Name="IntervalInput" 
-                         PlaceholderText="Intervalo en segundos"/>
-                
-                <Button Content="Agregar"
-                        Click="AddTask_Click"
-                        HorizontalAlignment="Right"/>
-            </StackPanel>
-        </material:Card>
-        
-        <ListBox Name="TaskList">
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="models:TaskItem">
-                    <material:Card Margin="0,5" Padding="10">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Text}" 
-                                       FontWeight="Bold"/>
-                            
-                            <TextBlock Text="{Binding Interval, StringFormat='Intervalo: {0}s'}" />
-                            
-                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                <Button Content="Iniciar" 
-                                        Click="StartTask_Click"/>
-                                
-                                <Button Content="Detener"
-                                        Click="StopTask_Click"/>
-                                
-                                <Button Content="Eliminar"
-                                        Click="DeleteTask_Click"/>
+        Title="TiniTask"
+        Background="#141218">
+
+    <Window.Resources>
+        <!-- MD3 Dark Color Scheme -->
+        <SolidColorBrush x:Key="MD3Primary"              Color="#D0BCFF"/>
+        <SolidColorBrush x:Key="MD3OnPrimary"            Color="#381E72"/>Color="#141218"/>
+        <SolidColorBrush x:Key="MD3SurfaceContainer"     Color="#1C1B1F"/>
+        <SolidColorBrush x:Key="MD3SurfaceContainerHigh" Color="#2B2930"/>
+        <SolidColorBrush x:Key="MD3OnSurface"            Color="#E6E1E5"/>
+        <SolidColorBrush x:Key="MD3OnSurfaceVariant"     Color="#CAC4D0"/>
+        <SolidColorBrush x:Key="MD3Outline"              Color="#938F99"/>
+        <SolidColorBrush x:Key="MD3OutlineVariant"       Color="#49454F"/>
+    </Window.Resources>
+
+    <Window.Styles>
+        <Style Selector="TextBox.md3">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="Foreground"      Value="#E6E1E5"/>
+            <Setter Property="BorderBrush"     Value="#938F99"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius"    Value="4"/>
+            <Setter Property="Padding"         Value="16,14"/>
+            <Setter Property="FontSize"        Value="16"/>
+            <Setter Property="MinHeight"       Value="56"/>
+            <Setter Property="CaretBrush"      Value="#D0BCFF"/>
+        </Style>
+        <Style Selector="TextBox.md3:focus">
+            <Setter Property="BorderBrush"     Value="#D0BCFF"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+        <Style Selector="TextBox.md3 /template/ TextBlock#PART_Watermark">
+            <Setter Property="Foreground" Value="#938F99"/>
+        </Style>
+
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding"      Value="0"/>
+            <Setter Property="Margin"       Value="0,0,0,10"/>
+            <Setter Property="Background"   Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="12"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="ScrollViewer">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+    </Window.Styles>
+
+    <ScrollViewer>
+        <StackPanel Margin="16" Spacing="12">
+
+            <!-- Top App Bar -->
+            <TextBlock Text="TiniTask"
+                       FontSize="22"
+                       FontWeight="Medium"
+                       Foreground="{StaticResource MD3OnSurface}"
+                       Margin="4,8,4,4"/>
+
+            <!-- Card entrada -->
+            <Border Background="{StaticResource MD3SurfaceContainer}"
+                    CornerRadius="12"
+                    Padding="16"
+                    BorderBrush="{StaticResource MD3OutlineVariant}"
+                    BorderThickness="1">
+                <StackPanel Spacing="14">
+
+                    <TextBlock Text="NUEVA TAREA"
+                               FontSize="11"
+                               FontWeight="Medium"
+                               Foreground="{StaticResource MD3OnSurfaceVariant}"/>
+
+                    <TextBox Name="TextInput"
+                             Classes="md3"
+                             Watermark="Texto a escribir"/>
+
+                    <Grid ColumnDefinitions="*,12,Auto">
+                        <TextBox Grid.Column="0"
+                                 Name="IntervalInput"
+                                 Classes="md3"
+                                 Watermark="Intervalo (segundos)"/>
+
+                        <Button Grid.Column="2"
+                                Content="Agregar"
+                                Click="AddTask_Click"
+                                VerticalAlignment="Center"
+                                Padding="24,10"
+                                CornerRadius="20"
+                                Background="{StaticResource MD3Primary}"
+                                Foreground="{StaticResource MD3OnPrimary}"
+                                FontWeight="Medium"
+                                FontSize="14"
+                                BorderThickness="0"/>
+                    </Grid>
+
+                </StackPanel>
+            </Border>
+
+            <!-- Section label -->
+            <TextBlock Name="TaskCountLabel"
+                       Text="Tareas"
+                       FontSize="14"
+                       FontWeight="Medium"
+                       Foreground="{StaticResource MD3OnSurfaceVariant}"
+                       Margin="4,0"/>
+
+            <!-- Lista -->
+            <ListBox Name="TaskList"
+                     Background="Transparent"
+                     Padding="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:TaskItem">
+
+                        <Border Background="{StaticResource MD3SurfaceContainerHigh}"
+                                CornerRadius="12"
+                                Padding="16"
+                                BorderBrush="#49454F"
+                                BorderThickness="1">
+                            <StackPanel>
+
+                                <TextBlock Text="{Binding Text}"
+                                           FontSize="16"
+                                           FontWeight="Medium"
+                                           Foreground="#E6E1E5"
+                                           Margin="0,0,0,6"/>
+
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="8"
+                                            Margin="0,0,0,12">
+                                    <Border CornerRadius="8"
+                                            Padding="8,4"
+                                            Background="#4A4458"
+                                            BorderBrush="#49454F"
+                                            BorderThickness="1">
+                                        <TextBlock Text="{Binding IsRunning}"
+                                                   FontSize="12"
+                                                   FontWeight="Medium"
+                                                   Foreground="#E8DEF8"/>
+                                    </Border>
+
+                                    <TextBlock Text="{Binding Interval, StringFormat='cada {0}s'}"
+                                               FontSize="13"
+                                               Foreground="#CAC4D0"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <Border Height="1"
+                                        Background="#49454F"
+                                        Margin="0,0,0,12"/>
+
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+
+                                    <!-- Tonal: Iniciar -->
+                                    <Button Content="Iniciar"
+                                            Click="StartTask_Click"
+                                            Padding="16,8"
+                                            CornerRadius="20"
+                                            Background="#4F378B"
+                                            Foreground="#EADDFF"
+                                            FontWeight="Medium"
+                                            FontSize="13"
+                                            BorderThickness="0"/>
+
+                                    <!-- Tonal: Detener -->
+                                    <Button Content="Detener"
+                                            Click="StopTask_Click"
+                                            Padding="16,8"
+                                            CornerRadius="20"
+                                            Background="#4A4458"
+                                            Foreground="#E8DEF8"
+                                            FontWeight="Medium"
+                                            FontSize="13"
+                                            BorderThickness="0"/>
+
+                                    <!-- Text: Eliminar -->
+                                    <Button Content="Eliminar"
+                                            Click="DeleteTask_Click"
+                                            Padding="12,8"
+                                            CornerRadius="20"
+                                            Background="Transparent"
+                                            Foreground="#F2B8B5"
+                                            FontWeight="Medium"
+                                            FontSize="13"
+                                            BorderThickness="0"/>
+
+                                </StackPanel>
                             </StackPanel>
-                        </StackPanel>
-                    </material:Card>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-        
-        <TextBlock Name="StatusText"
-                   Text="Estado: Listo"
-                   HorizontalAlignment="Center"/>
-    </StackPanel>
+                        </Border>
+
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Status bar -->
+            <Border Background="{StaticResource MD3SurfaceContainer}"
+                    CornerRadius="12"
+                    Padding="16,12"
+                    BorderBrush="{StaticResource MD3OutlineVariant}"
+                    BorderThickness="1">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Ellipse Width="8" Height="8"
+                             Fill="{StaticResource MD3Outline}"
+                             VerticalAlignment="Center"/>
+                    <TextBlock Name="StatusText"
+                               Text="Estado: Listo"
+                               FontSize="14"
+                               Foreground="{StaticResource MD3OnSurfaceVariant}"/>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
 </Window>
