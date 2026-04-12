@@ -44,7 +44,7 @@ public partial class MainWindow : Window
 
         var task = new TaskItem
         {
-            Text = TextInput.Text ?? "",
+            Text = TextInputBox.Text ?? "",
             Interval = interval
         };
 
@@ -64,10 +64,11 @@ public partial class MainWindow : Window
         _tokens[task] = cts;
         task.IsRunning = true;
 
-        RunTaskAsync(task, cts.Token);
+        StatusText.Text = $"Ejecutando: {task.Text}";
+        _ = RunTaskAsync(task, cts.Token);
     }
 
-    private async void RunTaskAsync(TaskItem task, CancellationToken token)
+    private async Task RunTaskAsync(TaskItem task, CancellationToken token)
     {
         try
         {
@@ -109,7 +110,10 @@ public partial class MainWindow : Window
 
         try
         {
+            StatusText.Text = $"Escribiendo: {text}";
+            await Task.Delay(500);
             await KeyboardService.TypeAsync(text);
+            StatusText.Text = "Estado: Listo";
         }
         catch (Exception ex)
         {

@@ -82,15 +82,15 @@
                                FontWeight="Medium"
                                Foreground="{StaticResource MD3OnSurfaceVariant}"/>
 
-                    <TextBox Name="TextInput"
+                    <TextBox Name="TextInputBox"
                              Classes="md3"
-                             Watermark="Texto a escribir"/>
+                             PlaceholderText="Texto a escribir"/>
 
                     <Grid ColumnDefinitions="*,12,Auto">
                         <TextBox Grid.Column="0"
                                  Name="IntervalInput"
                                  Classes="md3"
-                                 Watermark="Intervalo (segundos)"/>
+                                 PlaceholderText="Intervalo (segundos)"/>
 
                         <Button Grid.Column="2"
                                 Content="Agregar"
