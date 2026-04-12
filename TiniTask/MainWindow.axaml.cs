@@ -102,11 +102,18 @@ public partial class MainWindow : Window
         _tasks.Remove(task);
         await SaveTasks();
     }
-
-    // Simulación de escritura
-    private Task TypeTextAsync(string text)
+    
+    private async Task TypeTextAsync(string text)
     {
-        Console.WriteLine(text);
-        return Task.CompletedTask;
+        await Task.Delay(500);
+
+        try
+        {
+            await KeyboardService.TypeAsync(text);
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Error: {ex.Message}";
+        }
     }
 }

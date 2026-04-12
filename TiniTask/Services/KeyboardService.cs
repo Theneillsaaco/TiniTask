@@ -1,0 +1,69 @@
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using InputSimulatorStandard;
+
+namespace TiniTask.Services;
+
+public static class KeyboardService
+{
+    public static async Task TypeAsync(string text)
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            await Task.Delay(500);
+    }
+
+    private static Task TypeWindows(string text)
+    {
+        var simulator = new InputSimulator();
+        simulator.Keyboard.TextEntry(text);
+        return Task.CompletedTask;
+    }
+
+    private static async Task TypeMacOs(string text)
+    {
+        var escaped = text.Replace("\"", "\\\"");
+        await RunProcess("osascript", $"-e 'tell application \"System Events\" to keystroke \"{escaped}\"'");
+    }
+
+    private static async Task TypeLinux(string text)
+    {
+        if (IsWayland())
+            await RunProcess("ydotool", $"type \"{EscapeArg(text)}\"");
+        else 
+            await RunProcess("xdotool", $"type --delay 50 \"{EscapeArg(text)}\"");
+    }
+
+    private static bool IsWayland()
+    {
+        var waylandDisplay = Environment.GetEnvironmentVariable("WAYLAND_DISPLAY");
+        return !string.IsNullOrEmpty(waylandDisplay);
+    }
+    
+    private static string EscapeArg(string text) =>
+        text.Replace("\\", "\\\\").Replace("\"", "\\\"");
+
+    private static async Task RunProcess(string program, string args)
+    {
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = program,
+                Arguments = args,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+            }
+        };
+        
+        process.Start();
+        await process.WaitForExitAsync();
+
+        if (process.ExitCode != 0)
+        {
+            var error = await process.StandardError.ReadToEndAsync();
+            throw new Exception($"[{program}] fallo: {error}");
+        }
+    }
+}
