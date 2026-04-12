@@ -30,8 +30,7 @@ public static class KeyboardService
         simulator.Keyboard.TextEntry(text);
         
         Task.Delay(10).Wait();
-        
-        simulator.Keyboard.KeyPress(VirtualKeyCode.RETURN);
+        simulator.Keyboard.KeyPress(InputSimulatorStandard.Native.VirtualKeyCode.RETURN);
         return Task.CompletedTask;
     }
 
