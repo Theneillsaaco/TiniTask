@@ -12,7 +12,7 @@
     <Window.Resources>
         <!-- MD3 Dark Color Scheme -->
         <SolidColorBrush x:Key="MD3Primary"              Color="#D0BCFF"/>
-        <SolidColorBrush x:Key="MD3OnPrimary"            Color="#381E72"/>Color="#141218"/>
+        <SolidColorBrush x:Key="MD3OnPrimary"            Color="#381E72"/>
         <SolidColorBrush x:Key="MD3SurfaceContainer"     Color="#1C1B1F"/>
         <SolidColorBrush x:Key="MD3SurfaceContainerHigh" Color="#2B2930"/>
         <SolidColorBrush x:Key="MD3OnSurface"            Color="#E6E1E5"/>

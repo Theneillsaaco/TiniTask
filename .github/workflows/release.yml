@@ -40,30 +40,21 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      # ── Windows ─────────────────────────────────────────────────────────────
+      # ── Windows ──────────────────────────────────────────────────────────────
       - name: Publish (Windows)
         if: matrix.os == 'windows-latest'
-        run: |
-          dotnet publish -c Release -r win-x64 --self-contained true \
-            -p:PublishSingleFile=true \
-            -p:IncludeNativeLibrariesForSelfExtract=true \
-            -o publish/windows
+        shell: pwsh
+        run: dotnet publish TiniTask/TiniTask.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish/windows
 
       - name: Zip (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
-        run: |
-          Compress-Archive -Path publish/windows/* `
-            -DestinationPath TiniTask-windows-${{ github.ref_name }}.zip
+        run: Compress-Archive -Path publish/windows/* -DestinationPath TiniTask-windows-${{ github.ref_name }}.zip
 
-      # ── macOS ────────────────────────────────────────────────────────────────
+      # ── macOS ─────────────────────────────────────────────────────────────────
       - name: Publish (macOS)
         if: matrix.os == 'macos-latest'
-        run: |
-          dotnet publish -c Release -r osx-x64 --self-contained true \
-            -p:PublishSingleFile=true \
-            -p:IncludeNativeLibrariesForSelfExtract=true \
-            -o publish/macos
+        run: dotnet publish TiniTask/TiniTask.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish/macos
 
       - name: Create .app bundle (macOS)
         if: matrix.os == 'macos-latest'
@@ -71,47 +62,38 @@ jobs:
           APP=publish/TiniTask.app
           mkdir -p "$APP/Contents/MacOS"
           mkdir -p "$APP/Contents/Resources"
-
           cp publish/macos/TiniTask "$APP/Contents/MacOS/TiniTask"
           chmod +x "$APP/Contents/MacOS/TiniTask"
-
           cat > "$APP/Contents/Info.plist" << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-            "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
-            <key>CFBundleName</key>          <string>TiniTask</string>
-            <key>CFBundleIdentifier</key>    <string>com.tinitask.app</string>
-            <key>CFBundleVersion</key>       <string>${{ github.ref_name }}</string>
-            <key>CFBundleExecutable</key>    <string>TiniTask</string>
-            <key>CFBundlePackageType</key>   <string>APPL</string>
+            <key>CFBundleName</key>           <string>TiniTask</string>
+            <key>CFBundleIdentifier</key>     <string>com.tinitask.app</string>
+            <key>CFBundleVersion</key>        <string>${{ github.ref_name }}</string>
+            <key>CFBundleExecutable</key>     <string>TiniTask</string>
+            <key>CFBundlePackageType</key>    <string>APPL</string>
             <key>NSHighResolutionCapable</key><true/>
           </dict>
           </plist>
           EOF
-
           cd publish
           zip -r ../TiniTask-macos-${{ github.ref_name }}.zip TiniTask.app
 
-      # ── Linux AppImage ───────────────────────────────────────────────────────
+      # ── Linux AppImage ────────────────────────────────────────────────────────
       - name: Install AppImage tools (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y libfuse2 file
-
           wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
             -O /usr/local/bin/appimagetool
           chmod +x /usr/local/bin/appimagetool
 
       - name: Publish (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: |
-          dotnet publish -c Release -r linux-x64 --self-contained true \
-            -p:PublishSingleFile=true \
-            -p:IncludeNativeLibrariesForSelfExtract=true \
-            -o publish/linux
+        run: dotnet publish TiniTask/TiniTask.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish/linux
 
       - name: Build AppImage (Linux)
         if: matrix.os == 'ubuntu-latest'
@@ -119,11 +101,8 @@ jobs:
           mkdir -p AppDir/usr/bin
           mkdir -p AppDir/usr/share/applications
           mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
-
           cp publish/linux/TiniTask AppDir/usr/bin/TiniTask
           chmod +x AppDir/usr/bin/TiniTask
-
-          # .desktop
           cat > AppDir/usr/share/applications/tinitask.desktop << 'EOF'
           [Desktop Entry]
           Name=TiniTask
@@ -132,14 +111,7 @@ jobs:
           Type=Application
           Categories=Utility;
           EOF
-
           cp AppDir/usr/share/applications/tinitask.desktop AppDir/tinitask.desktop
-
-          # Icono placeholder (reemplaza con tu .png real de 256x256)
-          convert -size 256x256 xc:#6750A4 \
-            -fill white -pointsize 48 -gravity center \
-            -annotate 0 "TT" \
-            AppDir/usr/share/icons/hicolor/256x256/apps/tinitask.png 2>/dev/null || \
           python3 -c "
           import struct, zlib
           def png(w,h,color):
@@ -148,11 +120,9 @@ jobs:
               return b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',w,h,8,2,0,0,0))+chunk(b'IDAT',zlib.compress(raw))+chunk(b'IEND',b'')
           open('AppDir/usr/share/icons/hicolor/256x256/apps/tinitask.png','wb').write(png(256,256,[103,80,164]))
           "
-
           ln -sf usr/share/icons/hicolor/256x256/apps/tinitask.png AppDir/tinitask.png
-
           ARCH=x86_64 appimagetool AppDir TiniTask-linux-${{ github.ref_name }}.AppImage
-
+              
       # ── Upload artifacts ─────────────────────────────────────────────────────
       - name: Upload Windows artifact
         if: matrix.os == 'windows-latest'
