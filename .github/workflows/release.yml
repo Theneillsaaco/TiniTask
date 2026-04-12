@@ -1,0 +1,210 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            artifact: TiniTask-windows
+            ext: ".exe"
+
+          - os: macos-latest
+            rid: osx-x64
+            artifact: TiniTask-macos
+            ext: ""
+
+          - os: ubuntu-latest
+            rid: linux-x64
+            artifact: TiniTask-linux
+            ext: ""
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # ── Windows ─────────────────────────────────────────────────────────────
+      - name: Publish (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          dotnet publish -c Release -r win-x64 --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o publish/windows
+
+      - name: Zip (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path publish/windows/* `
+            -DestinationPath TiniTask-windows-${{ github.ref_name }}.zip
+
+      # ── macOS ────────────────────────────────────────────────────────────────
+      - name: Publish (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          dotnet publish -c Release -r osx-x64 --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o publish/macos
+
+      - name: Create .app bundle (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          APP=publish/TiniTask.app
+          mkdir -p "$APP/Contents/MacOS"
+          mkdir -p "$APP/Contents/Resources"
+
+          cp publish/macos/TiniTask "$APP/Contents/MacOS/TiniTask"
+          chmod +x "$APP/Contents/MacOS/TiniTask"
+
+          cat > "$APP/Contents/Info.plist" << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+            "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key>          <string>TiniTask</string>
+            <key>CFBundleIdentifier</key>    <string>com.tinitask.app</string>
+            <key>CFBundleVersion</key>       <string>${{ github.ref_name }}</string>
+            <key>CFBundleExecutable</key>    <string>TiniTask</string>
+            <key>CFBundlePackageType</key>   <string>APPL</string>
+            <key>NSHighResolutionCapable</key><true/>
+          </dict>
+          </plist>
+          EOF
+
+          cd publish
+          zip -r ../TiniTask-macos-${{ github.ref_name }}.zip TiniTask.app
+
+      # ── Linux AppImage ───────────────────────────────────────────────────────
+      - name: Install AppImage tools (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libfuse2 file
+
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
+            -O /usr/local/bin/appimagetool
+          chmod +x /usr/local/bin/appimagetool
+
+      - name: Publish (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          dotnet publish -c Release -r linux-x64 --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o publish/linux
+
+      - name: Build AppImage (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p AppDir/usr/bin
+          mkdir -p AppDir/usr/share/applications
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+
+          cp publish/linux/TiniTask AppDir/usr/bin/TiniTask
+          chmod +x AppDir/usr/bin/TiniTask
+
+          # .desktop
+          cat > AppDir/usr/share/applications/tinitask.desktop << 'EOF'
+          [Desktop Entry]
+          Name=TiniTask
+          Exec=TiniTask
+          Icon=tinitask
+          Type=Application
+          Categories=Utility;
+          EOF
+
+          cp AppDir/usr/share/applications/tinitask.desktop AppDir/tinitask.desktop
+
+          # Icono placeholder (reemplaza con tu .png real de 256x256)
+          convert -size 256x256 xc:#6750A4 \
+            -fill white -pointsize 48 -gravity center \
+            -annotate 0 "TT" \
+            AppDir/usr/share/icons/hicolor/256x256/apps/tinitask.png 2>/dev/null || \
+          python3 -c "
+          import struct, zlib
+          def png(w,h,color):
+              def chunk(t,d): c=zlib.crc32(t+d)&0xffffffff; return struct.pack('>I',len(d))+t+d+struct.pack('>I',c)
+              raw=b''.join(b'\x00'+bytes(color)*w for _ in range(h))
+              return b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',w,h,8,2,0,0,0))+chunk(b'IDAT',zlib.compress(raw))+chunk(b'IEND',b'')
+          open('AppDir/usr/share/icons/hicolor/256x256/apps/tinitask.png','wb').write(png(256,256,[103,80,164]))
+          "
+
+          ln -sf usr/share/icons/hicolor/256x256/apps/tinitask.png AppDir/tinitask.png
+
+          ARCH=x86_64 appimagetool AppDir TiniTask-linux-${{ github.ref_name }}.AppImage
+
+      # ── Upload artifacts ─────────────────────────────────────────────────────
+      - name: Upload Windows artifact
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: TiniTask-windows-${{ github.ref_name }}.zip
+
+      - name: Upload macOS artifact
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: TiniTask-macos-${{ github.ref_name }}.zip
+
+      - name: Upload Linux artifact
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: TiniTask-linux-${{ github.ref_name }}.AppImage
+
+  # ── Release ──────────────────────────────────────────────────────────────────
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "TiniTask ${{ github.ref_name }}"
+          body: |
+            ## TiniTask ${{ github.ref_name }}
+
+            ### Descargas
+            | Plataforma | Archivo |
+            |---|---|
+            | Windows (x64) | `TiniTask-windows-${{ github.ref_name }}.zip` |
+            | macOS (x64) | `TiniTask-macos-${{ github.ref_name }}.zip` |
+            | Linux AppImage | `TiniTask-linux-${{ github.ref_name }}.AppImage` |
+
+            ### Linux
+            ```bash
+            chmod +x TiniTask-linux-${{ github.ref_name }}.AppImage
+            ./TiniTask-linux-${{ github.ref_name }}.AppImage
+            ```
+          files: dist/**/*
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
