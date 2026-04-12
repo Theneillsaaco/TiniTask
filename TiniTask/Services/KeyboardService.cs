@@ -11,7 +11,17 @@ public static class KeyboardService
     public static async Task TypeAsync(string text)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            await Task.Delay(500);
+        {
+            await TypeWindows(text);
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            await TypeMacOs(text);
+        }
+        else
+        {
+            await TypeLinux(text);
+        }
     }
 
     private static Task TypeWindows(string text)
