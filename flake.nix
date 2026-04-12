@@ -15,15 +15,16 @@
         dotnet-sdk_10
         fontconfig
         freetype
-        libGL
-        libX11
         libICE
         libSM
+        libGL
+        libX11
         libXext
+        libXrender
         libXi
         libXrandr
-        libXrender
         libxcb
+
         glib
         gtk3
         pango
@@ -35,15 +36,22 @@
         ];
         
         LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
+          pkgs.libICE
+          pkgs.libSM
+          pkgs.libX11
+          pkgs.libXext
+          pkgs.libXrender
+          pkgs.libXi
+          pkgs.libXrandr
+          pkgs.libxcb
+          pkgs.libGL
           pkgs.fontconfig
           pkgs.freetype
-          pkgs.libGL
-          pkgs.libX11
-          pkgs.glib
-          pkgs.gtk3
+          pkgs.harfbuzz
           pkgs.pango
           pkgs.cairo
-          pkgs.harfbuzz
+          pkgs.gtk3
+          pkgs.glib
         ];
       };
     };
