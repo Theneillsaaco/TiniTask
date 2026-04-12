@@ -28,21 +28,27 @@ public static class KeyboardService
     {
         var simulator = new InputSimulator();
         simulator.Keyboard.TextEntry(text);
+        
+        Task.Delay(10).Wait();
+        
+        simulator.Keyboard.KeyPress(VirtualKeyCode.RETURN);
         return Task.CompletedTask;
     }
 
     private static async Task TypeMacOs(string text)
     {
         var escaped = text.Replace("\"", "\\\"");
-        await RunProcess("osascript", $"-e 'tell application \"System Events\" to keystroke \"{escaped}\"'");
+        await RunProcess("osascript", $"-e 'tell application \"System Events\" to keystroke \"{escaped}\"'" +
+            $"-e 'tell application \"System Events\" to key code 36'"
+        );
     }
 
     private static async Task TypeLinux(string text)
     {
         if (IsWayland())
-            await RunProcess("ydotool", $"type \"{EscapeArg(text)}\"");
+            await RunProcess("ydotool", $"type \"{EscapeArg(text)}\" && ydotool key 28:1 28:0");
         else 
-            await RunProcess("xdotool", $"type --delay 50 \"{EscapeArg(text)}\"");
+            await RunProcess("xdotool", $"type --delay 50 \"{EscapeArg(text)}\" key Return");
     }
 
     private static bool IsWayland()
