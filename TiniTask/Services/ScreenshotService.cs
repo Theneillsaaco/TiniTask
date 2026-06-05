@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TiniTask.Services;
 
-public class ScreenshotService
+public static class ScreenshotService
 {
     public static async Task<string> CaptureAsync()
     {

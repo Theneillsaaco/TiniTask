@@ -10,7 +10,6 @@
         Background="#141218">
 
     <Window.Resources>
-        <!-- MD3 Dark Color Scheme -->
         <SolidColorBrush x:Key="MD3Primary"              Color="#D0BCFF"/>
         <SolidColorBrush x:Key="MD3OnPrimary"            Color="#381E72"/>
         <SolidColorBrush x:Key="MD3SurfaceContainer"     Color="#1C1B1F"/>
@@ -41,6 +40,14 @@
             <Setter Property="Foreground" Value="#938F99"/>
         </Style>
 
+        <Style Selector="RadioButton">
+            <Setter Property="Foreground" Value="#CAC4D0"/>
+            <Setter Property="FontSize"   Value="13"/>
+        </Style>
+        <Style Selector="RadioButton:checked">
+            <Setter Property="Foreground" Value="#D0BCFF"/>
+        </Style>
+
         <Style Selector="ListBoxItem">
             <Setter Property="Padding"      Value="0"/>
             <Setter Property="Margin"       Value="0,0,0,10"/>
@@ -53,7 +60,6 @@
         <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
         </Style>
-
         <Style Selector="ScrollViewer">
             <Setter Property="Background" Value="Transparent"/>
         </Style>
@@ -64,44 +70,104 @@
 
             <!-- Top App Bar -->
             <TextBlock Text="TiniTask"
-                       FontSize="22"
-                       FontWeight="Medium"
+                       FontSize="22" FontWeight="Medium"
                        Foreground="{StaticResource MD3OnSurface}"
                        Margin="4,8,4,4"/>
 
             <!-- Card entrada -->
             <Border Background="{StaticResource MD3SurfaceContainer}"
-                    CornerRadius="12"
-                    Padding="16"
+                    CornerRadius="12" Padding="16"
                     BorderBrush="{StaticResource MD3OutlineVariant}"
                     BorderThickness="1">
                 <StackPanel Spacing="14">
 
                     <TextBlock Text="NUEVA TAREA"
-                               FontSize="11"
-                               FontWeight="Medium"
+                               FontSize="11" FontWeight="Medium"
                                Foreground="{StaticResource MD3OnSurfaceVariant}"/>
 
-                    <TextBox Name="TextInputBox"
-                             Classes="md3"
-                             PlaceholderText="Texto a escribir"/>
+                    <!-- Selector de tipo -->
+                    <StackPanel Orientation="Horizontal" Spacing="20">
+                        <RadioButton Name="TypeRadio"   Content="Escribir"  IsChecked="True" GroupName="TT"/>
+                        <RadioButton Name="ClickRadio"  Content="Click"                      GroupName="TT"/>
+                        <RadioButton Name="DetectRadio" Content="Detectar"                   GroupName="TT"/>
+                    </StackPanel>
+
+                    <!-- Panel: Escribir texto -->
+                    <Panel IsVisible="{Binding #TypeRadio.IsChecked}">
+                        <TextBox Name="TextInputBox" Classes="md3" PlaceholderText="Texto a escribir"/>
+                    </Panel>
+
+                    <!-- Panel: Click (X, Y) -->
+                    <Grid ColumnDefinitions="*,12,*" IsVisible="{Binding #ClickRadio.IsChecked}">
+                        <TextBox Grid.Column="0" Name="XInput" Classes="md3" PlaceholderText="X"/>
+                        <TextBox Grid.Column="2" Name="YInput" Classes="md3" PlaceholderText="Y"/>
+                    </Grid>
+
+                    <!-- Panel: Detectar varias imágenes -->
+                    <StackPanel Spacing="10" IsVisible="{Binding #DetectRadio.IsChecked}">
+
+                        <!-- Chips de imágenes seleccionadas -->
+                        <ItemsControl Name="SelectedImagesControl">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#332D41"
+                                            CornerRadius="16"
+                                            Padding="10,5"
+                                            Margin="0,0,6,6"
+                                            BorderBrush="#49454F"
+                                            BorderThickness="1">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontSize="12"
+                                                       Foreground="#E8DEF8"
+                                                       VerticalAlignment="Center"
+                                                       MaxWidth="150"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <Button Content="×"
+                                                    Tag="{Binding FullPath}"
+                                                    Click="RemoveImage_Click"
+                                                    Padding="0" Width="16" Height="16"
+                                                    Background="Transparent"
+                                                    Foreground="#938F99"
+                                                    BorderThickness="0"
+                                                    FontSize="13"
+                                                    VerticalAlignment="Center"
+                                                    VerticalContentAlignment="Center"
+                                                    HorizontalContentAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Botón agregar imagen -->
+                        <Button Content="+ Agregar imagen"
+                                Click="PickImage_Click"
+                                Padding="16,8" CornerRadius="20"
+                                Background="#4A4458" Foreground="#E8DEF8"
+                                FontWeight="Medium" FontSize="13"
+                                BorderThickness="0"
+                                HorizontalAlignment="Left"/>
+                    </StackPanel>
 
                     <Grid ColumnDefinitions="*,12,Auto">
                         <TextBox Grid.Column="0"
                                  Name="IntervalInput"
                                  Classes="md3"
                                  PlaceholderText="Intervalo (segundos)"/>
-
                         <Button Grid.Column="2"
                                 Content="Agregar"
                                 Click="AddTask_Click"
                                 VerticalAlignment="Center"
-                                Padding="24,10"
-                                CornerRadius="20"
+                                Padding="24,10" CornerRadius="20"
                                 Background="{StaticResource MD3Primary}"
                                 Foreground="{StaticResource MD3OnPrimary}"
-                                FontWeight="Medium"
-                                FontSize="14"
+                                FontWeight="Medium" FontSize="14"
                                 BorderThickness="0"/>
                     </Grid>
 
@@ -109,10 +175,8 @@
             </Border>
 
             <!-- Section label -->
-            <TextBlock Name="TaskCountLabel"
-                       Text="Tareas"
-                       FontSize="14"
-                       FontWeight="Medium"
+            <TextBlock Text="Tareas"
+                       FontSize="14" FontWeight="Medium"
                        Foreground="{StaticResource MD3OnSurfaceVariant}"
                        Margin="4,0"/>
 
@@ -125,78 +189,58 @@
                     <DataTemplate x:DataType="models:TaskItem">
 
                         <Border Background="{StaticResource MD3SurfaceContainerHigh}"
-                                CornerRadius="12"
-                                Padding="16"
-                                BorderBrush="#49454F"
-                                BorderThickness="1">
+                                CornerRadius="12" Padding="16"
+                                BorderBrush="#49454F" BorderThickness="1">
                             <StackPanel>
 
-                                <TextBlock Text="{Binding Text}"
-                                           FontSize="16"
-                                           FontWeight="Medium"
-                                           Foreground="#E6E1E5"
-                                           Margin="0,0,0,6"/>
+                                <!-- Título + badge de tipo -->
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding DisplayText}"
+                                               FontSize="15" FontWeight="Medium"
+                                               Foreground="#E6E1E5"
+                                               TextWrapping="Wrap"/>
+                                    <Border Grid.Column="1"
+                                            CornerRadius="8" Padding="8,3"
+                                            Background="#332D41" Margin="8,0,0,0"
+                                            VerticalAlignment="Top">
+                                        <TextBlock Text="{Binding Type}"
+                                                   FontSize="11" FontWeight="Medium"
+                                                   Foreground="#D0BCFF"/>
+                                    </Border>
+                                </Grid>
 
-                                <StackPanel Orientation="Horizontal"
-                                            Spacing="8"
-                                            Margin="0,0,0,12">
-                                    <Border CornerRadius="8"
-                                            Padding="8,4"
+                                <!-- Estado + intervalo -->
+                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+                                    <Border CornerRadius="8" Padding="8,4"
                                             Background="#4A4458"
-                                            BorderBrush="#49454F"
-                                            BorderThickness="1">
-                                        <TextBlock Text="{Binding IsRunning}"
-                                                   FontSize="12"
-                                                   FontWeight="Medium"
+                                            BorderBrush="#49454F" BorderThickness="1">
+                                        <TextBlock Text="{Binding StatusDisplay}"
+                                                   FontSize="12" FontWeight="Medium"
                                                    Foreground="#E8DEF8"/>
                                     </Border>
-
                                     <TextBlock Text="{Binding Interval, StringFormat='cada {0}s'}"
-                                               FontSize="13"
-                                               Foreground="#CAC4D0"
+                                               FontSize="13" Foreground="#CAC4D0"
                                                VerticalAlignment="Center"/>
                                 </StackPanel>
 
-                                <Border Height="1"
-                                        Background="#49454F"
-                                        Margin="0,0,0,12"/>
+                                <Border Height="1" Background="#49454F" Margin="0,0,0,12"/>
 
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-
-                                    <!-- Tonal: Iniciar -->
-                                    <Button Content="Iniciar"
-                                            Click="StartTask_Click"
-                                            Padding="16,8"
-                                            CornerRadius="20"
-                                            Background="#4F378B"
-                                            Foreground="#EADDFF"
-                                            FontWeight="Medium"
-                                            FontSize="13"
-                                            BorderThickness="0"/>
-
-                                    <!-- Tonal: Detener -->
-                                    <Button Content="Detener"
-                                            Click="StopTask_Click"
-                                            Padding="16,8"
-                                            CornerRadius="20"
-                                            Background="#4A4458"
-                                            Foreground="#E8DEF8"
-                                            FontWeight="Medium"
-                                            FontSize="13"
-                                            BorderThickness="0"/>
-
-                                    <!-- Text: Eliminar -->
-                                    <Button Content="Eliminar"
-                                            Click="DeleteTask_Click"
-                                            Padding="12,8"
-                                            CornerRadius="20"
-                                            Background="Transparent"
-                                            Foreground="#F2B8B5"
-                                            FontWeight="Medium"
-                                            FontSize="13"
-                                            BorderThickness="0"/>
-
+                                    <Button Content="Iniciar"  Click="StartTask_Click"
+                                            Padding="16,8" CornerRadius="20"
+                                            Background="#4F378B" Foreground="#EADDFF"
+                                            FontWeight="Medium" FontSize="13" BorderThickness="0"/>
+                                    <Button Content="Detener" Click="StopTask_Click"
+                                            Padding="16,8" CornerRadius="20"
+                                            Background="#4A4458" Foreground="#E8DEF8"
+                                            FontWeight="Medium" FontSize="13" BorderThickness="0"/>
+                                    <Button Content="Eliminar" Click="DeleteTask_Click"
+                                            Padding="12,8" CornerRadius="20"
+                                            Background="Transparent" Foreground="#F2B8B5"
+                                            FontWeight="Medium" FontSize="13" BorderThickness="0"/>
                                 </StackPanel>
+
                             </StackPanel>
                         </Border>
 
@@ -206,8 +250,7 @@
 
             <!-- Status bar -->
             <Border Background="{StaticResource MD3SurfaceContainer}"
-                    CornerRadius="12"
-                    Padding="16,12"
+                    CornerRadius="12" Padding="16,12"
                     BorderBrush="{StaticResource MD3OutlineVariant}"
                     BorderThickness="1">
                 <StackPanel Orientation="Horizontal" Spacing="8">

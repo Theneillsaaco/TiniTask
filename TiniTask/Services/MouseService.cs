@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace TiniTask.Services;
 
-public class MouseService
+public static class MouseService
 {
     public static async Task ClickAtAsync(int x, int y)
     {
