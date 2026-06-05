@@ -26,37 +26,40 @@ public static class ImageDetectionService
     
     private static (int cx, int cy)? FindBest(string screenPath, IEnumerable<string> templatePaths, float threshold)
     {
-        const int scale = 4;
+        const int scale = 1;
 
         // La pantalla se carga y escala una sola vez para todos los templates
         using var screen  = Image.Load<Rgb24>(screenPath);
-        using var screenS = screen.Clone(ctx => ctx.Resize(screen.Width / scale, screen.Height / scale));
+        
+        // using var screenS = screen.Clone(ctx => ctx.Resize(screen.Width / scale, screen.Height / scale));
 
-        var sp  = GetPixels(screenS);
-        int ssw = screenS.Width;
-        int ssh = screenS.Height;
+        var sp  = GetPixels(screen);
+        int ssw = screen.Width;
+        int ssh = screen.Height;
 
         float bestScore = float.MinValue;
-        int   bestCx    = -1;
-        int   bestCy    = -1;
+        int bestCx = -1;
+        int bestCy = -1;
 
         foreach (var path in templatePaths)
         {
-            if (!File.Exists(path)) continue;
+            if (!File.Exists(path)) 
+                continue;
 
             using var tmpl  = Image.Load<Rgb24>(path);
-            int tsw = Math.Max(4, tmpl.Width  / scale);
-            int tsh = Math.Max(4, tmpl.Height / scale);
-            using var tmplS = tmpl.Clone(ctx => ctx.Resize(tsw, tsh));
+            
+            // int tsw = Math.Max(4, tmpl.Width  / scale);
+            // int tsh = Math.Max(4, tmpl.Height / scale);
+            // using var tmplS = tmpl.Clone(ctx => ctx.Resize(tsw, tsh));
 
-            var tp = GetPixels(tmplS);
-            var (bx, by, score) = BestMatch(sp, tp, ssw, ssh, tsw, tsh);
+            var tp = GetPixels(tmpl);
+            var (bx, by, score) = BestMatch(sp, tp, ssw, ssh, tmpl.Width, tmpl.Height);
 
             if (score > bestScore)
             {
                 bestScore = score;
-                bestCx    = bx * scale + tmpl.Width  / 2;
-                bestCy    = by * scale + tmpl.Height / 2;
+                bestCx = bx + tmpl.Width / 2;
+                bestCy = by * scale + tmpl.Height / 2;
             }
         }
 

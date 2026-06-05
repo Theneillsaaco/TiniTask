@@ -39,11 +39,15 @@ public static class MouseService
     {
         if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY")))
         {
-            await RunProcess("ydotool", $"mousemove --absolute {x} {y}");
-            await RunProcess("ydotool", "click 0x40000001");
+            // Usamos la sintaxis limpia de 'ydotool mousemove -a'
+            await RunProcess("ydotool", $"mousemove -a {x} {y}");
+            // Para el click izquierdo normal se usa 'click 1' (0x40000001 a veces se rompe según el layout de uinput)
+            await RunProcess("ydotool", "click 1");
         }
         else
+        {
             await RunProcess("xdotool", $"mousemove {x} {y} click 1");
+        }
     }
 
     private static async Task RunProcess(string program, string args)

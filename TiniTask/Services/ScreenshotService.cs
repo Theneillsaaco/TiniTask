@@ -25,7 +25,7 @@ public static class ScreenshotService
     private static async Task CaptureLinux(string path)
     {
         if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY")))
-            await RunProcess("grim", $"\"{path}\"");
+            await RunProcess("grim", $"\"{path}\""); 
         else
             await RunProcess("scrot", $"\"{path}\"");
     }
